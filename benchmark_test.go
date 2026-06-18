@@ -1,7 +1,9 @@
 package tiktoken
 
 import (
+	"encoding/base64"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -14,7 +16,10 @@ const (
 	benchmark4MiBBytes  = 4 << 20
 )
 
-var benchmarkEncodingSink []int
+var (
+	benchmarkEncodingSink []int
+	benchmarkTiktokenSink *Tiktoken
+)
 
 func readBenchmarkFixture(b *testing.B) string {
 	b.Helper()
@@ -47,6 +52,42 @@ func corpusPrefix(text string, maxBytes int) string {
 	return text[:maxBytes]
 }
 
+func BenchmarkEncodingForModelLookup(b *testing.B) {
+	b.ReportAllocs()
+
+	for range b.N {
+		tkm, err := EncodingForModel("gpt-4o")
+		if err != nil {
+			b.Fatal(err)
+		}
+		benchmarkTiktokenSink = tkm
+	}
+}
+
+func BenchmarkLoadTiktokenBpeParsing(b *testing.B) {
+	var builder strings.Builder
+	for i := range 50_000 {
+		token := "benchmark_token_" + strconv.Itoa(i)
+		builder.WriteString(base64.StdEncoding.EncodeToString([]byte(token)))
+		builder.WriteByte(' ')
+		builder.WriteString(strconv.Itoa(i))
+		builder.WriteByte('\n')
+	}
+
+	path := b.TempDir() + "/benchmark.tiktoken"
+	if err := os.WriteFile(path, []byte(builder.String()), 0o600); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		if _, err := loadTiktokenBpe(path); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func BenchmarkEncoding(b *testing.B) {
 	tkm, err := EncodingForModel("gpt-4o")
 	if err != nil {
@@ -62,6 +103,7 @@ func BenchmarkEncoding(b *testing.B) {
 		{name: "github/64KiB", text: corpusPrefix(githubCorpus, benchmark64KiBBytes)},
 		{name: "github/1MiB", text: corpusPrefix(githubCorpus, benchmark1MiBBytes)},
 		{name: "github/4MiB", text: corpusPrefix(githubCorpus, benchmark4MiBBytes)},
+		{name: "adversarial/long_ascii_single_piece", text: strings.Repeat("abcdefghijklmnopqrstuvwxyz", 4096)},
 	}
 
 	for _, bm := range benchmarks {
