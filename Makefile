@@ -1,7 +1,12 @@
 MODULE := $(shell go list -m)
 Q      := $(if $(VERBOSE),,@)
+BENCH_DIR ?= docs/benchmarks
+BENCH_FILE ?= $(BENCH_DIR)/$(shell date -u +%Y%m%dT%H%M%SZ).txt
+BENCH_RUN ?= BenchmarkEncoding
+BENCH_TIME ?= 1s
+BENCH_COUNT ?= 5
 
-.PHONY: build test test-unit test-race lint lint-changed test-changed doctor doctor-build format generate clean uninstall tidy
+.PHONY: build test test-unit test-race lint lint-changed test-changed bench doctor doctor-build format generate clean uninstall tidy
 
 define CHANGED_GO_PKGS
 files="$$(git diff --name-only --diff-filter=ACMR HEAD -- '*.go'; git ls-files --others --exclude-standard -- '*.go')"; \
@@ -45,6 +50,25 @@ lint-changed:
 test-changed:
 	$(Q)$(CHANGED_GO_PKGS); \
 	gotestsum --format=pkgname-and-test-fails --format-hide-empty-pkg -- -race -count=1 $$pkgs
+
+bench:
+	$(Q)mkdir -p "$(BENCH_DIR)"; \
+	start=$$(date -u +%s); \
+	{ \
+		echo "# tiktoken-go benchmark"; \
+		echo "timestamp_utc: $$(date -u +%Y-%m-%dT%H:%M:%SZ)"; \
+		echo "commit: $$(git rev-parse --short HEAD)"; \
+		echo "branch: $$(git branch --show-current)"; \
+		echo "go: $$(go version)"; \
+		echo "command: go test -bench=$(BENCH_RUN) -benchmem -benchtime=$(BENCH_TIME) -count=$(BENCH_COUNT) -run '^$$' ."; \
+		echo; \
+		go test -bench="$(BENCH_RUN)" -benchmem -benchtime="$(BENCH_TIME)" -count="$(BENCH_COUNT)" -run '^$$' .; \
+		rc=$$?; \
+		end=$$(date -u +%s); \
+		echo; \
+		echo "elapsed_seconds: $$((end - start))"; \
+	} > "$(BENCH_FILE)"; \
+	if [ $$rc -eq 0 ]; then echo "bench: $(BENCH_FILE)"; else echo "bench failed: $(BENCH_FILE)"; exit $$rc; fi
 
 doctor:
 	$(Q)missing=0; \

@@ -36,9 +36,11 @@
 
 4.2 This is not a template-standard single-binary CLI repo. Do not add `VERSION`, `src/buildinfo/version.go`, `bin/<app>`, `/usr/local/bin` symlinks, or `/root/go/bin` symlinks for this library.
 
-4.3 Keep benchmarks deterministic: no debug prints in `Benchmark*`, use `b.N`, `b.ReportAllocs()`, and explicit fixture paths.
+4.3 `make bench` writes timestamped benchmark results to `docs/benchmarks/<UTC>.txt`. Keep the output compatible with Go benchmark tooling and include timestamp, commit, command, Go version, raw benchmark rows, and elapsed wall time.
 
-4.4 Keep tests deterministic by default. External network parity checks must be explicit, isolated, and not presented as unit-test evidence.
+4.4 Keep benchmarks deterministic: no debug prints in `Benchmark*`, use `b.N`, `b.ReportAllocs()`, and explicit fixture paths.
+
+4.5 Keep tests deterministic by default. External network parity checks must be explicit, isolated, and not presented as unit-test evidence.
 
 ## 5. Change Policy
 
