@@ -42,7 +42,8 @@ func readFile(blobpath string) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
 			"unexpected HTTP status %d (%s) for URL %s",
-			resp.StatusCode, resp.Status, blobpath)
+			resp.StatusCode, resp.Status, blobpath,
+		)
 	}
 	return io.ReadAll(resp.Body)
 }
@@ -96,16 +97,21 @@ func loadTiktokenBpe(tiktokenBpeFile string) (map[string]int, error) {
 	}
 
 	bpeRanks := make(map[string]int)
+	lineNo := 0
 	for line := range strings.SplitSeq(string(contents), "\n") {
+		lineNo++
 		if line == "" {
 			continue
 		}
-		parts := strings.Split(line, " ")
-		token, err := base64.StdEncoding.DecodeString(parts[0])
+		tokenText, rankText, ok := strings.Cut(line, " ")
+		if !ok {
+			return nil, fmt.Errorf("invalid tiktoken BPE line %d: %q", lineNo, line)
+		}
+		token, err := base64.StdEncoding.DecodeString(tokenText)
 		if err != nil {
 			return nil, err
 		}
-		rank, err := strconv.Atoi(parts[1])
+		rank, err := strconv.Atoi(rankText)
 		if err != nil {
 			return nil, err
 		}

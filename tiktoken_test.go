@@ -39,6 +39,15 @@ func TestDecoding(t *testing.T) {
 	ass.Equal(text, enc.Decode(tokens), "Decoding should be equal")
 }
 
+func TestLoadTiktokenBpe_InvalidLineReturnsError(t *testing.T) {
+	path := t.TempDir() + "/bad.tiktoken"
+	require.NoError(t, os.WriteFile(path, []byte("not-a-valid-line"), 0o600))
+
+	_, err := loadTiktokenBpe(path)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "invalid tiktoken BPE line 1")
+}
+
 type urlRewriteLoader struct {
 	realBase string
 	fakeBase string

@@ -1,11 +1,9 @@
 package tiktoken
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/dlclark/regexp2"
@@ -18,7 +16,6 @@ type CoreBPE struct {
 	specialTokensDecoder map[int]string
 	tlRegex              *regexp2.Regexp
 	tlSpecialRegex       *regexp2.Regexp
-	sortedTokenBytes     [][]byte
 }
 
 func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*CoreBPE, error) {
@@ -50,14 +47,6 @@ func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*
 		specialTokensDecoder[v] = k
 	}
 
-	sortedTokenBytes := make([][]byte, 0, len(encoder))
-	for k := range encoder {
-		sortedTokenBytes = append(sortedTokenBytes, []byte(k))
-	}
-	sort.Slice(sortedTokenBytes, func(i, j int) bool {
-		return bytes.Compare(sortedTokenBytes[i], sortedTokenBytes[j]) < 0
-	})
-
 	return &CoreBPE{
 		encoder:              encoder,
 		specialTokensEncoder: specialTokensEncoder,
@@ -65,7 +54,6 @@ func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*
 		specialTokensDecoder: specialTokensDecoder,
 		tlRegex:              regex,
 		tlSpecialRegex:       specialRegex,
-		sortedTokenBytes:     sortedTokenBytes,
 	}, nil
 }
 
@@ -96,7 +84,7 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 			}
 		}
 
-		end := len([]rune(text))
+		end := len(textRunes)
 		if nextSpecial != nil {
 			end = start + nextSpecial[0]
 		}
