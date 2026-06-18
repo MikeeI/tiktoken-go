@@ -22,7 +22,11 @@ func TestRegex2Func(t *testing.T) {
 
 	for _, word := range words {
 		ass.Equal(re.FindStringIndex(word), findRegex2StringIndex(word, re2))
-		ass.Equal(re.FindAllStringSubmatchIndex(word, -1), findRegex2AllStringMatchIndex(word, re2))
+		var got [][]int
+		forEachRegex2StringMatchIndex(word, re2, func(start, end int) {
+			got = append(got, []int{start, end})
+		})
+		ass.Equal(re.FindAllStringSubmatchIndex(word, -1), got)
 		ass.Equal(re.FindString(word), findRegex2StringMatch(word, re2))
 	}
 }

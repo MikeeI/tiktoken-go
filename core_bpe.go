@@ -90,17 +90,17 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 		}
 
 		// Okay, here we go, compare this logic to _encode_ordinary_native
-		for _, mat := range findRegex2AllStringMatchIndex(cutRunes(textRunes, start, end), regex) {
-			piece := cutRunes(textRunes, start+mat[0], start+mat[1])
+		forEachRegex2StringMatchIndex(cutRunes(textRunes, start, end), regex, func(matchStart, matchEnd int) {
+			piece := cutRunes(textRunes, start+matchStart, start+matchEnd)
 			if token, ok := bp.encoder[piece]; ok {
 				lastPieceTokenLen = 1
 				ret = append(ret, token)
-				continue
+				return
 			}
 			tokens := bytePairEncode([]byte(piece), bp.encoder)
 			lastPieceTokenLen = len(tokens)
 			ret = append(ret, tokens...)
-		}
+		})
 
 		if nextSpecial != nil {
 			temp := cutRunes(textRunes, start+nextSpecial[0], start+nextSpecial[1])
@@ -119,15 +119,15 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 func (bp *CoreBPE) encodeOrdinaryNative(text string) []int {
 	ret := []int{}
 	textRunes := []rune(text)
-	for _, mat := range findRegex2AllStringMatchIndex(text, bp.tlRegex) {
-		piece := cutRunes(textRunes, mat[0], mat[1])
+	forEachRegex2StringMatchIndex(text, bp.tlRegex, func(start, end int) {
+		piece := cutRunes(textRunes, start, end)
 		if token, ok := bp.encoder[piece]; ok {
 			ret = append(ret, token)
-			continue
+			return
 		}
 		tokens := bytePairEncode([]byte(piece), bp.encoder)
 		ret = append(ret, tokens...)
-	}
+	})
 	return ret
 }
 
@@ -156,17 +156,12 @@ func findRegex2StringIndex(text string, reg *regexp2.Regexp) []int {
 	return result
 }
 
-func findRegex2AllStringMatchIndex(text string, reg *regexp2.Regexp) [][]int {
-	var matches [][]int
+func forEachRegex2StringMatchIndex(text string, reg *regexp2.Regexp, fn func(start, end int)) {
 	m, _ := reg.FindStringMatch(text)
 	for m != nil {
-		result := make([]int, 2)
-		result[0] = m.Index
-		result[1] = m.Index + m.Length
-		matches = append(matches, result)
+		fn(m.Index, m.Index+m.Length)
 		m, _ = reg.FindNextMatch(m)
 	}
-	return matches
 }
 
 func cutRunes(runes []rune, start, end int) string {
