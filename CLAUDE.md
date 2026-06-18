@@ -66,6 +66,26 @@
 
 6.4 Commit benchmark snapshots only when intentionally establishing or updating a baseline. Do not auto-commit every local run.
 
+6.5 Current benchmark snapshot is `docs/benchmarks/20260618T043924Z.txt`, generated at commit `55c5f17` with Go `go1.26.4 linux/amd64` on `AMD Ryzen 9 5950X 16-Core Processor`.
+
+6.6 Performance progress versus baseline `docs/benchmarks/20260618T041338Z.txt`:
+
+| Case | ns/op median | Speed change | B/op median | B/op change | allocs/op median | allocs change |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `BenchmarkEncoding/fixture` | 67,149 | 13.1% slower | 24,064 | 7.7% higher | 244 | 12.9% lower |
+| `BenchmarkEncoding/github/64KiB` | 22,141,255 | 3.6% slower | 7,406,652 | 17.5% lower | 84,972 | 15.4% lower |
+| `BenchmarkEncoding/github/1MiB` | 301,011,409 | 5.5% slower | 113,252,896 | 18.2% lower | 1,213,422 | 14.7% lower |
+| `BenchmarkEncoding/github/4MiB` | 952,293,860 | 1.4% faster | 398,728,376 | 17.4% lower | 4,207,928 | 15.2% lower |
+
+6.7 New targeted benchmark surfaces:
+
+| Case | Current median | Current allocation | Purpose |
+| --- | ---: | ---: | --- |
+| `BenchmarkEncodingForModelLookup` | 66.03 ns/op | 24 B/op, 1 alloc/op | Confirms encoding/core state reuse removes repeated cold initialization. |
+| `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 34,246,069 ns/op | 13,386,048 B/op, 16 allocs/op | Confirms heap BPE merge removes the prior multi-second O(N²) worst case. |
+
+6.8 Current read of progress: cache/init waste is fixed, parser allocations are reduced, corpus allocations are materially lower, adversarial BPE is fixed, but normal corpus throughput is not broadly improved yet. Next performance work should target `Encode` allocation pressure and avoid changes that trade corpus throughput for narrow worst-case wins.
+
 ## 7. Verification Policy
 
 7.1 Keep tests deterministic by default. External network parity checks must be explicit, isolated, and not presented as unit-test evidence.
