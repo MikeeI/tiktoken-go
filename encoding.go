@@ -2,7 +2,6 @@ package tiktoken
 
 import (
 	"errors"
-	"strings"
 	"sync"
 )
 
@@ -27,6 +26,8 @@ const (
 	R50kBaseURL   = "https://openaipublic.blob.core.windows.net/encodings/r50k_base.tiktoken"
 
 	allowedSpecialAll = "all"
+	o200kPatStr       = `[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?|[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n/]*|\s*[\r\n]+|\s+(?!\S)|\s+`
+	cl100kPatStr      = `(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+`
 	p50kPatStr        = `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`
 )
 
@@ -210,18 +211,9 @@ func o200k_base() (*Encoding, error) {
 		ENDOFTEXT:   199999,
 		ENDOFPROMPT: 200018,
 	}
-	pats := []string{
-		`[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]*[\p{Ll}\p{Lm}\p{Lo}\p{M}]+(?i:'s|'t|'re|'ve|'m|'ll|'d)?`,
-		`[^\r\n\p{L}\p{N}]?[\p{Lu}\p{Lt}\p{Lm}\p{Lo}\p{M}]+[\p{Ll}\p{Lm}\p{Lo}\p{M}]*(?i:'s|'t|'re|'ve|'m|'ll|'d)?`,
-		`\p{N}{1,3}`,
-		` ?[^\s\p{L}\p{N}]+[\r\n/]*`,
-		`\s*[\r\n]+`,
-		`\s+(?!\S)`,
-		`\s+`,
-	}
 	return &Encoding{
 		Name:           MODEL_O200K_BASE,
-		PatStr:         strings.Join(pats, "|"),
+		PatStr:         o200kPatStr,
 		MergeableRanks: ranks,
 		SpecialTokens:  special_tokens,
 	}, nil
@@ -241,7 +233,7 @@ func cl100k_base() (*Encoding, error) {
 	}
 	return &Encoding{
 		Name:           MODEL_CL100K_BASE,
-		PatStr:         `(?i:'s|'t|'re|'ve|'m|'ll|'d)|[^\r\n\p{L}\p{N}]?\p{L}+|\p{N}{1,3}| ?[^\s\p{L}\p{N}]+[\r\n]*|\s*[\r\n]+|\s+(?!\S)|\s+`,
+		PatStr:         cl100kPatStr,
 		MergeableRanks: ranks,
 		SpecialTokens:  special_tokens,
 	}, nil

@@ -1,5 +1,7 @@
 # project-tiktoken-go-fork
 
+Project references: @package.json
+
 ## 1. Project Contract
 
 1.1 This is a Go library fork of `github.com/pkoukk/tiktoken-go`, not a setup-project single-binary CLI repo.
@@ -66,25 +68,25 @@
 
 6.4 Commit benchmark snapshots only when intentionally establishing or updating a baseline. Do not auto-commit every local run.
 
-6.5 Current benchmark snapshot is `docs/benchmarks/20260618T051056Z.txt`, generated at commit `2c00d89` with Go `go1.26.4 linux/amd64` on `AMD Ryzen 9 5950X 16-Core Processor`.
+6.5 Current benchmark snapshot is `docs/benchmarks/20260618T052119Z.txt`, generated at commit `9cdbec0` with Go `go1.26.4 linux/amd64` on `AMD Ryzen 9 5950X 16-Core Processor`.
 
 6.6 Performance progress versus baseline `docs/benchmarks/20260618T041338Z.txt`:
 
 | Case | ns/op median | Speed change | B/op median | B/op change | allocs/op median | allocs change | Read |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `BenchmarkEncoding/fixture` | 56,002 | 5.7% faster | 17,120 | 23.4% lower | 231 | 17.5% lower | speed win |
-| `BenchmarkEncoding/github/64KiB` | 20,854,928 | 2.4% faster | 6,563,539 | 26.9% lower | 83,979 | 16.4% lower | speed win |
-| `BenchmarkEncoding/github/1MiB` | 270,890,510 | 5.0% faster | 95,645,484 | 30.9% lower | 1,191,410 | 16.3% lower | speed win |
-| `BenchmarkEncoding/github/4MiB` | 872,191,816 | 9.7% faster | 342,206,824 | 29.1% lower | 4,149,623 | 16.4% lower | speed win |
+| `BenchmarkEncoding/fixture` | 56,768 | 4.4% faster | 17,120 | 23.4% lower | 231 | 17.5% lower | speed win |
+| `BenchmarkEncoding/github/64KiB` | 1,757,628 | 91.8% faster | 772,968 | 91.4% lower | 1,694 | 98.3% lower | speed win |
+| `BenchmarkEncoding/github/1MiB` | 27,294,986 | 90.4% faster | 13,170,684 | 90.5% lower | 33,794 | 97.6% lower | speed win |
+| `BenchmarkEncoding/github/4MiB` | 70,703,264 | 92.7% faster | 48,360,208 | 90.0% lower | 82,323 | 98.3% lower | speed win |
 
 6.7 New targeted benchmark surfaces:
 
 | Case | Current median | Current allocation | Purpose |
 | --- | ---: | ---: | --- |
 | `BenchmarkEncodingForModelLookup` | 66.03 ns/op | 24 B/op, 1 alloc/op | Confirms encoding/core state reuse removes repeated cold initialization. |
-| `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 34,295,686 ns/op | 12,190,018 B/op, 11 allocs/op | Confirms heap BPE merge still removes the prior multi-second O(N²) worst case. |
+| `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 29,464,613 ns/op | 11,763,712 B/op, 5 allocs/op | Confirms heap BPE merge plus o200k ASCII scanning still removes the prior multi-second O(N²) worst case. |
 
-6.8 Current read of progress: the ordinary-encode fast route converted all representative corpus cases into speed wins versus `docs/benchmarks/20260618T041338Z.txt`. Next performance work should target remaining `regexp2` cost inside `encodeOrdinaryNative`; post-route CPU profile still shows `forEachRegex2StringMatchIndex`/`regexp2` as the dominant representative corpus cost.
+6.8 Current read of progress: the o200k ordinary-encode fast route bypasses `regexp2` for ASCII spans and keeps small non-ASCII islands on the parity-safe regex path. Next performance work should target `encodeNative` with allowed specials and equivalent ASCII scanners for `cl100k_base`, `p50k_base`, and `r50k_base`.
 
 ## 7. Verification Policy
 
