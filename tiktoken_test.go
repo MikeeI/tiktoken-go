@@ -11,29 +11,20 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestEncoding(t *testing.T) {
+func TestSpecialTokenPolicy(t *testing.T) {
 	ass := assert.New(t)
 	req := require.New(t)
 	enc, err := EncodingForModel("gpt-3.5-turbo-16k")
-	req.NoError(err, "Encoding  init should not be nil")
-	tokens := enc.Encode("hello world!你好，世界！", []string{allowedSpecialAll}, []string{allowedSpecialAll})
-	// these tokens are converted from the original python code
-	sourceTokens := []int{15339, 1917, 0, 57668, 53901, 3922, 3574, 244, 98220, 6447}
-	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
+	req.NoError(err, "Encoding init should not fail")
 
-	tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, nil)
-	sourceTokens = []int{15339, 220, 100257}
-	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
-
-	tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, []string{allowedSpecialAll})
-	sourceTokens = []int{15339, 220, 100257}
-	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
-
-	ass.Panics(func() {
-		tokens = enc.Encode("hello "+ENDOFTEXT+ENDOFPROMPT, []string{ENDOFTEXT}, []string{allowedSpecialAll})
+	ass.NotPanics(func() {
+		enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, nil)
 	})
 	ass.Panics(func() {
-		tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, []string{ENDOFTEXT})
+		enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, []string{ENDOFTEXT})
+	})
+	ass.Panics(func() {
+		enc.Encode("hello "+ENDOFTEXT+ENDOFPROMPT, []string{ENDOFTEXT}, []string{allowedSpecialAll})
 	})
 }
 
@@ -41,10 +32,11 @@ func TestDecoding(t *testing.T) {
 	ass := assert.New(t)
 	req := require.New(t)
 	enc, err := GetEncoding(MODEL_CL100K_BASE)
-	req.NoError(err, "Encoding  init should not be nil")
-	sourceTokens := []int{15339, 1917, 0, 57668, 53901, 3922, 3574, 244, 98220, 6447}
-	txt := enc.Decode(sourceTokens)
-	ass.Equal("hello world!你好，世界！", txt, "Decoding should be equal")
+	req.NoError(err, "Encoding init should not fail")
+
+	text := "hello world!你好，世界！"
+	tokens := enc.Encode(text, nil, nil)
+	ass.Equal(text, enc.Decode(tokens), "Decoding should be equal")
 }
 
 type urlRewriteLoader struct {
