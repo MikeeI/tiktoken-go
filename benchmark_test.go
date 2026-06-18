@@ -1,42 +1,53 @@
 package tiktoken
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"testing"
 )
 
-const TEST_FILE = "test/test.txt"
+const benchmarkInputPath = "testdata/token_inputs.txt"
 
-func ReadTestFile() ([]byte, error) {
-	// open and read TEST_FILE
-	return os.ReadFile(TEST_FILE)
+var benchmarkEncodingSink []int
+
+func readBenchmarkInput(b *testing.B) string {
+	b.Helper()
+
+	data, err := os.ReadFile(benchmarkInputPath)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	firstLine, _, _ := strings.Cut(string(data), "\n")
+	return firstLine
 }
 
 func BenchmarkEncoding(b *testing.B) {
-	fileContent, err := ReadTestFile()
-	if err != nil {
-		panic(err)
-	}
-
 	tkm, err := EncodingForModel("gpt-4o")
 	if err != nil {
-		panic(err)
+		b.Fatal(err)
 	}
 
-	text := string(fileContent)
+	seed := readBenchmarkInput(b)
+	benchmarks := []struct {
+		name    string
+		repeats int
+	}{
+		{name: "1x", repeats: 1},
+		{name: "10x", repeats: 10},
+		{name: "100x", repeats: 100},
+	}
 
-	for range 4 {
-		// do actual encoding
-		fmt.Printf("Encoding %d bytes\n", len(text))
-		tkm.Encode(text, nil, nil)
+	for _, bm := range benchmarks {
+		text := strings.Repeat(seed, bm.repeats)
+		b.Run(bm.name, func(b *testing.B) {
+			b.ReportAllocs()
+			b.SetBytes(int64(len(text)))
+			b.ResetTimer()
 
-		stringBuilder := strings.Builder{}
-		for range 10 {
-			stringBuilder.WriteString(text)
-		}
-
-		text = stringBuilder.String()
+			for range b.N {
+				benchmarkEncodingSink = tkm.Encode(text, nil, nil)
+			}
+		})
 	}
 }

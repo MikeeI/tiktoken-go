@@ -10,6 +10,8 @@ import (
 	"github.com/pkoukk/tiktoken-go"
 )
 
+const tokenInputPath = "testdata/token_inputs.txt"
+
 // main
 func main() {
 	textList, modelList, encodingList, err := readTestFile()
@@ -23,7 +25,7 @@ func main() {
 
 // read all columns from a file
 func readTestFile() ([]string, []string, []string, error) {
-	file, err := os.Open("test/test.txt")
+	file, err := os.Open(tokenInputPath)
 	if err != nil {
 		return nil, nil, nil, err
 	}

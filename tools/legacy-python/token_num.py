@@ -62,7 +62,7 @@ def test_token_by_encoding(text_list, encoding_list):
             print('text: {}, encoding: {}, token: {}'.format(text, encoding, num_tokens))
 
 if __name__ == '__main__':
-    text_list, model_list, encoding_list = read_data_from_file('test/test.txt')
+    text_list, model_list, encoding_list = read_data_from_file('testdata/token_inputs.txt')
     test_token_by_model(text_list, model_list)
     print("=========================================")
     test_token_by_encoding(text_list, encoding_list)

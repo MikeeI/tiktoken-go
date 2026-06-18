@@ -238,23 +238,23 @@ func NumTokensFromMessages(messages []openai.ChatCompletionMessage, model string
 | code-search-ada-code-001     | r50k_base     |
 | gpt2                         | gpt2          |
 
-# Test
+# Test and tools
 
-> you can run test in [test](./test) folder
+> test fixtures live in [testdata](./testdata); comparison/debug tools live in [tools](./tools)
 
 ## compare with original [tiktoken](https://github.com/openai/tiktoken)
 
 ## get token by encoding
 
-[result](./doc/test_result.md#encoding-test-result)
+[result](./docs/benchmark-results.md#encoding-test-result)
 
 ## get token by model
 
-[result](./doc/test_result.md#model-test-result)
+[result](./docs/benchmark-results.md#model-test-result)
 
 # Benchmark
 
-> you can run benchmark in [test](./test) folder
+> run library benchmarks from the root package; optional UDHR comparison helpers live in [tools/bench](./tools/bench)
 
 ## Benchmark result
 
