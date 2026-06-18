@@ -6,7 +6,7 @@ BENCH_RUN ?= BenchmarkEncoding
 BENCH_TIME ?= 1s
 BENCH_COUNT ?= 5
 
-.PHONY: build test test-unit test-race lint lint-changed test-changed bench doctor doctor-build format generate clean uninstall tidy
+.PHONY: build test test-unit test-race lint lint-changed test-changed bench bench-corpus doctor doctor-build format generate clean uninstall tidy
 
 define CHANGED_GO_PKGS
 files="$$(git diff --name-only --diff-filter=ACMR HEAD -- '*.go'; git ls-files --others --exclude-standard -- '*.go')"; \
@@ -51,7 +51,7 @@ test-changed:
 	$(Q)$(CHANGED_GO_PKGS); \
 	gotestsum --format=pkgname-and-test-fails --format-hide-empty-pkg -- -race -count=1 $$pkgs
 
-bench:
+bench: bench-corpus
 	$(Q)mkdir -p "$(BENCH_DIR)"; \
 	start=$$(date -u +%s); \
 	{ \
@@ -69,6 +69,9 @@ bench:
 		echo "elapsed_seconds: $$((end - start))"; \
 	} > "$(BENCH_FILE)"; \
 	if [ $$rc -eq 0 ]; then echo "bench: $(BENCH_FILE)"; else echo "bench failed: $(BENCH_FILE)"; exit $$rc; fi
+
+bench-corpus:
+	$(Q)go run ./tools/bench-corpus
 
 doctor:
 	$(Q)missing=0; \

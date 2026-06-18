@@ -1,0 +1,21 @@
+# GitHub benchmark corpus manifest
+# Source snapshots are fetched once and reused from testdata/bench/github/.
+# name	bytes	sha256	file	url
+golang-net-http-server	137659	cfd50be3ca6c9509c8fe3506468fc7393dc94a1f0042caf8c7900dd003943a51	testdata/bench/github/01-golang-net-http-server.go	https://raw.githubusercontent.com/golang/go/master/src/net/http/server.go
+golang-runtime-proc	243217	40d15ce858cf058cff92606001a29ee1689db88c121a2f0c283163a0d64a7375	testdata/bench/github/02-golang-runtime-proc.go	https://raw.githubusercontent.com/golang/go/master/src/runtime/proc.go
+golang-fmt-print	33315	10d7cd625d83a15f70b6e61641d3cebd4e4d49d7e0f2a24d5d2b59988074d2f7	testdata/bench/github/03-golang-fmt-print.go	https://raw.githubusercontent.com/golang/go/master/src/fmt/print.go
+kubernetes-kubelet	151494	c33deeb0e94805d87fc34493b37aa355d70ce0bc83e185403d5bca59caa5155f	testdata/bench/github/04-kubernetes-kubelet.go	https://raw.githubusercontent.com/kubernetes/kubernetes/master/pkg/kubelet/kubelet.go
+kubernetes-scheduler	54458	3952e2fb4dc6adb80f2ffaa32f1a38770aca5ee86e90faa4ee9f2c08ecad5ecd	testdata/bench/github/05-kubernetes-scheduler.go	https://raw.githubusercontent.com/kubernetes/kubernetes/master/pkg/scheduler/schedule_one.go
+kubernetes-deployment-controller	24078	25e924815880147cfa87a428a29a7a863ea3f48c2ac7bc004ea2074c846a1afb	testdata/bench/github/06-kubernetes-deployment-controller.go	https://raw.githubusercontent.com/kubernetes/kubernetes/master/pkg/controller/deployment/deployment_controller.go
+typescript-checker	3097340	3a25293194aa6d6150738405acdc45876173927881e1ea1464de4463a2833fe5	testdata/bench/github/07-typescript-checker.ts	https://raw.githubusercontent.com/microsoft/TypeScript/main/src/compiler/checker.ts
+typescript-parser	528862	3b9a786edf5ee46a75b23b385fe7d1e4e8fc9061296bafe0ba4edd515f35a808	testdata/bench/github/08-typescript-parser.ts	https://raw.githubusercontent.com/microsoft/TypeScript/main/src/compiler/parser.ts
+vscode-text-model	108833	3ccef30b2902046ff93d99b5d9cd03ae2748785e099d123cf519aa5527d0b622	testdata/bench/github/09-vscode-text-model.ts	https://raw.githubusercontent.com/microsoft/vscode/main/src/vs/editor/common/model/textModel.ts
+vscode-workbench	20389	d91758ba9a96aec5417eac70a193973bf25cc36e000ef85546748bd59ae3786e	testdata/bench/github/10-vscode-workbench.ts	https://raw.githubusercontent.com/microsoft/vscode/main/src/vs/workbench/browser/workbench.ts
+react-fiber-work-loop	202794	6705f60abd46b5b53e1ba60a384e821ebfad2c6f298c5dc722fbf93f7b9f1d13	testdata/bench/github/11-react-fiber-work-loop.js	https://raw.githubusercontent.com/facebook/react/main/packages/react-reconciler/src/ReactFiberWorkLoop.js
+react-dom-events	31174	e466a1755b8dcb470beb9cf7efba339142925dd2cfb0e9e790980a34e8140a8d	testdata/bench/github/12-react-dom-events.js	https://raw.githubusercontent.com/facebook/react/main/packages/react-dom-bindings/src/events/DOMPluginEventSystem.js
+rust-hir	191823	2a5b4da74ce74e78eb3a7168c66a143d12a06db9b6dab140d586bd3d162a0e50	testdata/bench/github/13-rust-hir.rs	https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_hir/src/hir.rs
+rust-ty-context	110483	d0bf967cb90a004460f536ef5bfe51c1095e77b4d1bd1a9febeb3f963016fa06	testdata/bench/github/14-rust-ty-context.rs	https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_middle/src/ty/context.rs
+cpython-asyncio-base-events	81676	bd08ace9b016d81686a6f5e93de6d2ef30022f321b4bba27807ea87f4b6e3e15	testdata/bench/github/15-cpython-asyncio-base-events.py	https://raw.githubusercontent.com/python/cpython/main/Lib/asyncio/base_events.py
+cpython-http-server	43928	3d48e1f3c99172cd40c84922ea5e6c13de20eaa2cbf9a26c201cbf2b97784dc6	testdata/bench/github/16-cpython-http-server.py	https://raw.githubusercontent.com/python/cpython/main/Lib/http/server.py
+node-cjs-loader	77476	07cf20d06845c1d54a67887eabe94a2ba5e4c4644a538b69892a9be976721465	testdata/bench/github/17-node-cjs-loader.js	https://raw.githubusercontent.com/nodejs/node/main/lib/internal/modules/cjs/loader.js
+node-http	8274	4e8f6347631eb73481e6bd11b26a53c4bd89b3cff42a4fed2eac7e8d48e6293e	testdata/bench/github/18-node-http.js	https://raw.githubusercontent.com/nodejs/node/main/lib/http.js

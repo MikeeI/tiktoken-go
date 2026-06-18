@@ -256,9 +256,10 @@ func NumTokensFromMessages(messages []openai.ChatCompletionMessage, model string
 
 > run library benchmarks from the root package; optional UDHR comparison helpers live in [tools/bench](./tools/bench)
 
-Use `make bench` to write a timestamped benchmark snapshot to `docs/benchmarks/`.
+Use `make bench-corpus` to fetch one-time GitHub source snapshots into `testdata/bench/github/`. Existing snapshots are reused and not downloaded again. Use `make bench` to refresh the corpus if needed and write a timestamped benchmark snapshot to `docs/benchmarks/`.
 
 ```bash
+make bench-corpus
 make bench
 BENCH_COUNT=10 BENCH_TIME=2s make bench
 ```
