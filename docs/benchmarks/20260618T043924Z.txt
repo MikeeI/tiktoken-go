@@ -1,0 +1,45 @@
+# tiktoken-go benchmark
+timestamp_utc: 2026-06-18T04:39:24Z
+commit: 55c5f17
+branch: main
+go: go version go1.26.4 linux/amd64
+command: go test -bench=BenchmarkEncoding -benchmem -benchtime=1s -count=5 -run '^$' .
+
+goos: linux
+goarch: amd64
+pkg: github.com/pkoukk/tiktoken-go
+cpu: AMD Ryzen 9 5950X 16-Core Processor            
+BenchmarkEncodingForModelLookup-32    	18000000	        62.35 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEncodingForModelLookup-32    	18556604	        62.54 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEncodingForModelLookup-32    	21182934	        67.92 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEncodingForModelLookup-32    	18397479	        67.45 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEncodingForModelLookup-32    	20537353	        66.03 ns/op	      24 B/op	       1 allocs/op
+BenchmarkEncoding/fixture-32          	   17541	     67149 ns/op	   3.34 MB/s	   24064 B/op	     244 allocs/op
+BenchmarkEncoding/fixture-32          	   18517	     68966 ns/op	   3.25 MB/s	   24064 B/op	     244 allocs/op
+BenchmarkEncoding/fixture-32          	   16358	     71493 ns/op	   3.13 MB/s	   24064 B/op	     244 allocs/op
+BenchmarkEncoding/fixture-32          	   16393	     66725 ns/op	   3.36 MB/s	   24064 B/op	     244 allocs/op
+BenchmarkEncoding/fixture-32          	   16507	     64643 ns/op	   3.47 MB/s	   24064 B/op	     244 allocs/op
+BenchmarkEncoding/github/64KiB-32     	      48	  23250668 ns/op	   2.82 MB/s	 7406652 B/op	   84972 allocs/op
+BenchmarkEncoding/github/64KiB-32     	      54	  20295819 ns/op	   3.23 MB/s	 7406652 B/op	   84972 allocs/op
+BenchmarkEncoding/github/64KiB-32     	      73	  22001884 ns/op	   2.98 MB/s	 7406654 B/op	   84972 allocs/op
+BenchmarkEncoding/github/64KiB-32     	      52	  23064800 ns/op	   2.84 MB/s	 7406651 B/op	   84972 allocs/op
+BenchmarkEncoding/github/64KiB-32     	      54	  22141255 ns/op	   2.96 MB/s	 7406656 B/op	   84972 allocs/op
+BenchmarkEncoding/github/1MiB-32      	       4	 303955313 ns/op	   3.45 MB/s	113252896 B/op	 1213422 allocs/op
+BenchmarkEncoding/github/1MiB-32      	       4	 292350624 ns/op	   3.59 MB/s	113252900 B/op	 1213422 allocs/op
+BenchmarkEncoding/github/1MiB-32      	       4	 275443213 ns/op	   3.81 MB/s	113253012 B/op	 1213423 allocs/op
+BenchmarkEncoding/github/1MiB-32      	       4	 301011409 ns/op	   3.48 MB/s	113252864 B/op	 1213422 allocs/op
+BenchmarkEncoding/github/1MiB-32      	       4	 310023382 ns/op	   3.38 MB/s	113252872 B/op	 1213422 allocs/op
+BenchmarkEncoding/github/4MiB-32      	       2	 952293860 ns/op	   4.40 MB/s	398728368 B/op	 4207928 allocs/op
+BenchmarkEncoding/github/4MiB-32      	       2	 953391393 ns/op	   4.40 MB/s	398728456 B/op	 4207928 allocs/op
+BenchmarkEncoding/github/4MiB-32      	       2	 948548355 ns/op	   4.42 MB/s	398728376 B/op	 4207928 allocs/op
+BenchmarkEncoding/github/4MiB-32      	       2	 964034194 ns/op	   4.35 MB/s	398728440 B/op	 4207928 allocs/op
+BenchmarkEncoding/github/4MiB-32      	       2	 932787447 ns/op	   4.50 MB/s	398728376 B/op	 4207928 allocs/op
+BenchmarkEncoding/adversarial/long_ascii_single_piece-32         	      32	  34276297 ns/op	   3.11 MB/s	13386048 B/op	      16 allocs/op
+BenchmarkEncoding/adversarial/long_ascii_single_piece-32         	      34	  34246069 ns/op	   3.11 MB/s	13386048 B/op	      16 allocs/op
+BenchmarkEncoding/adversarial/long_ascii_single_piece-32         	      33	  35299969 ns/op	   3.02 MB/s	13386048 B/op	      16 allocs/op
+BenchmarkEncoding/adversarial/long_ascii_single_piece-32         	      33	  33444956 ns/op	   3.18 MB/s	13386048 B/op	      16 allocs/op
+BenchmarkEncoding/adversarial/long_ascii_single_piece-32         	      33	  33944783 ns/op	   3.14 MB/s	13386048 B/op	      16 allocs/op
+PASS
+ok  	github.com/pkoukk/tiktoken-go	63.360s
+
+elapsed_seconds: 63
