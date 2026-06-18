@@ -2,6 +2,8 @@ package tiktoken
 
 import "math"
 
+const heapMergeMinBytes = 512
+
 type mergePart struct {
 	start      int
 	rank       int
@@ -77,7 +79,72 @@ func (h *mergeCandidateHeap) Pop() mergeCandidate {
 }
 
 //nolint:gocognit // Byte-pair merge mirrors upstream logic; refactoring risks tokenizer parity.
-func bytePairMerge[T any](piece []byte, ranks map[string]int, f func(start, end int) T) []T {
+func bytePairMerge[T any](piece string, ranks map[string]int, f func(start, end int) T) []T {
+	if len(piece) < heapMergeMinBytes {
+		return bytePairMergeScan(piece, ranks, f)
+	}
+	return bytePairMergeHeap(piece, ranks, f)
+}
+
+//nolint:gocognit // Byte-pair merge mirrors upstream logic; refactoring risks tokenizer parity.
+func bytePairMergeScan[T any](piece string, ranks map[string]int, f func(start, end int) T) []T {
+	parts := make([][2]int, len(piece)+1)
+	for i := range parts {
+		parts[i][0], parts[i][1] = i, math.MaxInt
+	}
+
+	getRank := func(startIdx, skip int) int {
+		if startIdx+skip+2 < len(parts) {
+			if rank, ok := ranks[piece[parts[startIdx][0]:parts[startIdx+skip+2][0]]]; ok {
+				return rank
+			}
+		}
+		return -1
+	}
+
+	for i := range len(parts) - 2 {
+		if rank := getRank(i, 0); rank >= 0 {
+			parts[i][1] = rank
+		}
+	}
+
+	for len(parts) > 1 {
+		minRank, minIdx := math.MaxInt, -1
+		for i := range len(parts) - 1 {
+			if parts[i][1] < minRank {
+				minRank, minIdx = parts[i][1], i
+			}
+		}
+
+		if minRank == math.MaxInt {
+			break
+		}
+
+		i := minIdx
+		if rank := getRank(i, 1); rank >= 0 {
+			parts[i][1] = rank
+		} else {
+			parts[i][1] = math.MaxInt
+		}
+		if i > 0 {
+			if rank := getRank(i-1, 1); rank >= 0 {
+				parts[i-1][1] = rank
+			} else {
+				parts[i-1][1] = math.MaxInt
+			}
+		}
+		parts = append(parts[:i+1], parts[i+2:]...)
+	}
+
+	out := make([]T, len(parts)-1)
+	for i := range out {
+		out[i] = f(parts[i][0], parts[i+1][0])
+	}
+	return out
+}
+
+//nolint:gocognit // Heap variant preserves scan tie-breaking for long pieces.
+func bytePairMergeHeap[T any](piece string, ranks map[string]int, f func(start, end int) T) []T {
 	parts := make([]mergePart, len(piece)+1)
 	for i := range parts {
 		parts[i] = mergePart{
@@ -103,7 +170,7 @@ func bytePairMerge[T any](piece []byte, ranks map[string]int, f func(start, end 
 		if nextNext < 0 || !parts[nextNext].alive {
 			return math.MaxInt
 		}
-		if rank, ok := ranks[string(piece[parts[index].start:parts[nextNext].start])]; ok {
+		if rank, ok := ranks[piece[parts[index].start:parts[nextNext].start]]; ok {
 			return rank
 		}
 		return math.MaxInt
@@ -160,12 +227,12 @@ func bytePairMerge[T any](piece []byte, ranks map[string]int, f func(start, end 
 	return out
 }
 
-func bytePairEncode(piece []byte, ranks map[string]int) []int {
+func bytePairEncode(piece string, ranks map[string]int) []int {
 	if len(piece) == 1 {
-		v := ranks[string(piece)]
+		v := ranks[piece]
 		return []int{v}
 	}
 	return bytePairMerge(piece, ranks, func(start, end int) int {
-		return ranks[string(piece[start:end])]
+		return ranks[piece[start:end]]
 	})
 }

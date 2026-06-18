@@ -5,8 +5,10 @@ BENCH_FILE ?= $(BENCH_DIR)/$(shell date -u +%Y%m%dT%H%M%SZ).txt
 BENCH_RUN ?= BenchmarkEncoding
 BENCH_TIME ?= 1s
 BENCH_COUNT ?= 5
+BENCH_BASE ?= docs/benchmarks/20260618T041338Z.txt
+BENCH_NEW ?=
 
-.PHONY: build test test-unit test-race lint lint-changed test-changed bench bench-corpus doctor doctor-build format generate clean uninstall tidy
+.PHONY: build test test-unit test-race lint lint-changed test-changed bench bench-compare bench-corpus doctor doctor-build format generate clean uninstall tidy
 
 define CHANGED_GO_PKGS
 files="$$(git diff --name-only --diff-filter=ACMR HEAD -- '*.go'; git ls-files --others --exclude-standard -- '*.go')"; \
@@ -69,6 +71,10 @@ bench: bench-corpus
 		echo "elapsed_seconds: $$((end - start))"; \
 	} > "$(BENCH_FILE)"; \
 	if [ $$rc -eq 0 ]; then echo "bench: $(BENCH_FILE)"; else echo "bench failed: $(BENCH_FILE)"; exit $$rc; fi
+
+bench-compare:
+	$(Q)test -n "$(BENCH_NEW)" || { echo "BENCH_NEW required"; exit 1; }
+	$(Q)go run golang.org/x/perf/cmd/benchstat@latest "$(BENCH_BASE)" "$(BENCH_NEW)"
 
 bench-corpus:
 	$(Q)go run ./tools/bench-corpus

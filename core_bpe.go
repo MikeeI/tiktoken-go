@@ -59,6 +59,9 @@ func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*
 
 //nolint:gocognit // Regex/special-token loop mirrors upstream logic; refactoring risks tokenizer parity.
 func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]int, int) {
+	if isASCII(text) {
+		return bp.encodeNativeASCII(text, allowedSpecial)
+	}
 	specialRegex := bp.tlSpecialRegex
 	regex := bp.tlRegex
 	ret := []int{}
@@ -97,7 +100,7 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 				ret = append(ret, token)
 				return
 			}
-			tokens := bytePairEncode([]byte(piece), bp.encoder)
+			tokens := bytePairEncode(piece, bp.encoder)
 			lastPieceTokenLen = len(tokens)
 			ret = append(ret, tokens...)
 		})
@@ -116,7 +119,64 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 	return ret, lastPieceTokenLen
 }
 
+func (bp *CoreBPE) encodeNativeASCII(text string, allowedSpecial map[string]any) ([]int, int) {
+	specialRegex := bp.tlSpecialRegex
+	regex := bp.tlRegex
+	ret := []int{}
+	lastPieceTokenLen := 0
+
+	start := 0
+	for {
+		var nextSpecial []int
+		startFind := start
+		for {
+			nextSpecial = findRegex2StringIndex(text[startFind:], specialRegex)
+			if nextSpecial != nil {
+				token := text[startFind+nextSpecial[0] : startFind+nextSpecial[1]]
+				if _, ok := allowedSpecial[token]; ok {
+					break
+				}
+				startFind += nextSpecial[1]
+			} else {
+				break
+			}
+		}
+
+		end := len(text)
+		if nextSpecial != nil {
+			end = start + nextSpecial[0]
+		}
+
+		forEachRegex2StringMatchIndex(text[start:end], regex, func(matchStart, matchEnd int) {
+			piece := text[start+matchStart : start+matchEnd]
+			if token, ok := bp.encoder[piece]; ok {
+				lastPieceTokenLen = 1
+				ret = append(ret, token)
+				return
+			}
+			tokens := bytePairEncode(piece, bp.encoder)
+			lastPieceTokenLen = len(tokens)
+			ret = append(ret, tokens...)
+		})
+
+		if nextSpecial != nil {
+			temp := text[start+nextSpecial[0] : start+nextSpecial[1]]
+			token := bp.specialTokensEncoder[temp]
+			ret = append(ret, token)
+			start += nextSpecial[1]
+			lastPieceTokenLen = 0
+		} else {
+			break
+		}
+	}
+
+	return ret, lastPieceTokenLen
+}
+
 func (bp *CoreBPE) encodeOrdinaryNative(text string) []int {
+	if isASCII(text) {
+		return bp.encodeOrdinaryNativeASCII(text)
+	}
 	ret := []int{}
 	textRunes := []rune(text)
 	forEachRegex2StringMatchIndex(text, bp.tlRegex, func(start, end int) {
@@ -125,10 +185,33 @@ func (bp *CoreBPE) encodeOrdinaryNative(text string) []int {
 			ret = append(ret, token)
 			return
 		}
-		tokens := bytePairEncode([]byte(piece), bp.encoder)
+		tokens := bytePairEncode(piece, bp.encoder)
 		ret = append(ret, tokens...)
 	})
 	return ret
+}
+
+func (bp *CoreBPE) encodeOrdinaryNativeASCII(text string) []int {
+	ret := []int{}
+	forEachRegex2StringMatchIndex(text, bp.tlRegex, func(start, end int) {
+		piece := text[start:end]
+		if token, ok := bp.encoder[piece]; ok {
+			ret = append(ret, token)
+			return
+		}
+		tokens := bytePairEncode(piece, bp.encoder)
+		ret = append(ret, tokens...)
+	})
+	return ret
+}
+
+func isASCII(text string) bool {
+	for i := range len(text) {
+		if text[i] >= 0x80 {
+			return false
+		}
+	}
+	return true
 }
 
 func (bpe *CoreBPE) decodeNative(tokens []int) []byte {
