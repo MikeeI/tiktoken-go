@@ -9,6 +9,8 @@ import (
 	"github.com/dlclark/regexp2"
 )
 
+const asciiFastPathMinBytes = 1024
+
 type CoreBPE struct {
 	encoder              map[string]int
 	decoder              map[int]string
@@ -59,7 +61,7 @@ func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*
 
 //nolint:gocognit // Regex/special-token loop mirrors upstream logic; refactoring risks tokenizer parity.
 func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]int, int) {
-	if isASCII(text) {
+	if len(text) >= asciiFastPathMinBytes && isASCII(text) {
 		return bp.encodeNativeASCII(text, allowedSpecial)
 	}
 	specialRegex := bp.tlSpecialRegex
@@ -174,7 +176,7 @@ func (bp *CoreBPE) encodeNativeASCII(text string, allowedSpecial map[string]any)
 }
 
 func (bp *CoreBPE) encodeOrdinaryNative(text string) []int {
-	if isASCII(text) {
+	if len(text) >= asciiFastPathMinBytes && isASCII(text) {
 		return bp.encodeOrdinaryNativeASCII(text)
 	}
 	ret := []int{}
