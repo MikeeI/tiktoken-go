@@ -70,6 +70,10 @@ func (t *Tiktoken) Encode(text string, allowedSpecial, disallowedSpecial []strin
 		}
 	}
 
+	if len(allowedSpecialSet) == 0 {
+		return t.bpe.encodeOrdinaryNative(text)
+	}
+
 	tokens, _ := t.bpe.encodeNative(text, allowedSpecialSet)
 	return tokens
 }
