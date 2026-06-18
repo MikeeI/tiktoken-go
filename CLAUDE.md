@@ -66,25 +66,25 @@
 
 6.4 Commit benchmark snapshots only when intentionally establishing or updating a baseline. Do not auto-commit every local run.
 
-6.5 Current benchmark snapshot is `docs/benchmarks/20260618T043924Z.txt`, generated at commit `55c5f17` with Go `go1.26.4 linux/amd64` on `AMD Ryzen 9 5950X 16-Core Processor`.
+6.5 Current benchmark snapshot is `docs/benchmarks/20260618T050030Z.txt`, generated at commit `2c11dc3` with Go `go1.26.4 linux/amd64` on `AMD Ryzen 9 5950X 16-Core Processor`.
 
 6.6 Performance progress versus baseline `docs/benchmarks/20260618T041338Z.txt`:
 
 | Case | ns/op median | Speed change | B/op median | B/op change | allocs/op median | allocs change | Read |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
-| `BenchmarkEncoding/fixture` | 67,149 | 13.1% slower | 24,064 | 7.7% higher | 244 | 12.9% lower | regression |
-| `BenchmarkEncoding/github/64KiB` | 22,141,255 | 3.6% slower | 7,406,652 | 17.5% lower | 84,972 | 15.4% lower | regression |
-| `BenchmarkEncoding/github/1MiB` | 301,011,409 | 5.5% slower | 113,252,896 | 18.2% lower | 1,213,422 | 14.7% lower | regression |
-| `BenchmarkEncoding/github/4MiB` | 952,293,860 | 1.4% faster | 398,728,376 | 17.4% lower | 4,207,928 | 15.2% lower | small win |
+| `BenchmarkEncoding/fixture` | 58,309 | 1.8% faster | 18,304 | 18.1% lower | 234 | 16.4% lower | speed win |
+| `BenchmarkEncoding/github/64KiB` | 21,470,144 | 0.4% slower | 6,973,140 | 22.3% lower | 83,982 | 16.4% lower | neutral |
+| `BenchmarkEncoding/github/1MiB` | 281,754,795 | 1.2% faster | 101,953,340 | 26.4% lower | 1,191,413 | 16.3% lower | speed win |
+| `BenchmarkEncoding/github/4MiB` | 904,686,923 | 6.4% faster | 367,389,024 | 23.9% lower | 4,149,626 | 16.4% lower | speed win |
 
 6.7 New targeted benchmark surfaces:
 
 | Case | Current median | Current allocation | Purpose |
 | --- | ---: | ---: | --- |
 | `BenchmarkEncodingForModelLookup` | 66.03 ns/op | 24 B/op, 1 alloc/op | Confirms encoding/core state reuse removes repeated cold initialization. |
-| `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 34,246,069 ns/op | 13,386,048 B/op, 16 allocs/op | Confirms heap BPE merge removes the prior multi-second O(N²) worst case. |
+| `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 32,646,746 ns/op | 12,616,001 B/op, 12 allocs/op | Confirms heap BPE merge removes the prior multi-second O(N²) worst case. |
 
-6.8 Current read of progress: cache/init waste is fixed and adversarial BPE is fixed, but normal corpus speed regressed for fixture, 64KiB, and 1MiB despite lower allocations. Next performance work must be throughput-first on representative `BenchmarkEncoding` corpus cases; allocation-only improvements are not sufficient.
+6.8 Current read of progress: speed-first status is restored. `fixture`, `1MiB`, and `4MiB` improved versus baseline; `64KiB` is statistically neutral/slightly slower by median; allocation reductions are now secondary evidence, not the primary win. Next performance work should target `regexp2` cost in `Encode`, because CPU profiles show regex execution dominates representative corpus runs.
 
 ## 7. Verification Policy
 
