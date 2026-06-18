@@ -2,7 +2,7 @@ MODULE := $(shell go list -m)
 Q      := $(if $(VERBOSE),,@)
 BENCH_DIR ?= docs/benchmarks
 BENCH_FILE ?= $(BENCH_DIR)/$(shell date -u +%Y%m%dT%H%M%SZ).txt
-BENCH_RUN ?= BenchmarkEncoding
+BENCH_RUN ?= ^BenchmarkEncoding$$
 BENCH_TIME ?= 1s
 BENCH_COUNT ?= 5
 BENCH_BASE ?= docs/benchmarks/20260618T041338Z.txt
@@ -74,7 +74,7 @@ bench: bench-corpus
 
 bench-compare:
 	$(Q)test -n "$(BENCH_NEW)" || { echo "BENCH_NEW required"; exit 1; }
-	$(Q)go run golang.org/x/perf/cmd/benchstat@latest "$(BENCH_BASE)" "$(BENCH_NEW)"
+	$(Q)go run golang.org/x/perf/cmd/benchstat@latest -ignore=timestamp_utc,commit,branch,go,command "$(BENCH_BASE)" "$(BENCH_NEW)"
 
 bench-corpus:
 	$(Q)go run ./tools/bench-corpus
