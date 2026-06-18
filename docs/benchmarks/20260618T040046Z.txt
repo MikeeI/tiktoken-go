@@ -1,0 +1,30 @@
+# tiktoken-go benchmark
+timestamp_utc: 2026-06-18T04:00:46Z
+commit: e5f8e47
+branch: main
+go: go version go1.26.4 linux/amd64
+command: go test -bench=BenchmarkEncoding -benchmem -benchtime=1s -count=5 -run '^$' .
+
+goos: linux
+goarch: amd64
+pkg: github.com/pkoukk/tiktoken-go
+cpu: AMD Ryzen 9 5950X 16-Core Processor            
+BenchmarkEncoding/1x-32 	   18096	     64821 ns/op	   3.46 MB/s	   22336 B/op	     280 allocs/op
+BenchmarkEncoding/1x-32 	   18672	     65916 ns/op	   3.40 MB/s	   22336 B/op	     280 allocs/op
+BenchmarkEncoding/1x-32 	   18128	     61531 ns/op	   3.64 MB/s	   22336 B/op	     280 allocs/op
+BenchmarkEncoding/1x-32 	   17332	     65712 ns/op	   3.41 MB/s	   22336 B/op	     280 allocs/op
+BenchmarkEncoding/1x-32 	   17935	     60890 ns/op	   3.68 MB/s	   22336 B/op	     280 allocs/op
+BenchmarkEncoding/10x-32         	    1843	    600847 ns/op	   3.73 MB/s	  220200 B/op	    2608 allocs/op
+BenchmarkEncoding/10x-32         	    2108	    620010 ns/op	   3.61 MB/s	  220200 B/op	    2608 allocs/op
+BenchmarkEncoding/10x-32         	    1573	    651853 ns/op	   3.44 MB/s	  220200 B/op	    2608 allocs/op
+BenchmarkEncoding/10x-32         	    2023	    630284 ns/op	   3.55 MB/s	  220200 B/op	    2608 allocs/op
+BenchmarkEncoding/10x-32         	    1605	    636219 ns/op	   3.52 MB/s	  220200 B/op	    2608 allocs/op
+BenchmarkEncoding/100x-32        	     177	   6098484 ns/op	   3.67 MB/s	 2257913 B/op	   25839 allocs/op
+BenchmarkEncoding/100x-32        	     190	   6169850 ns/op	   3.63 MB/s	 2257913 B/op	   25839 allocs/op
+BenchmarkEncoding/100x-32        	     184	   6181295 ns/op	   3.62 MB/s	 2257914 B/op	   25839 allocs/op
+BenchmarkEncoding/100x-32        	     211	   6230226 ns/op	   3.60 MB/s	 2257913 B/op	   25839 allocs/op
+BenchmarkEncoding/100x-32        	     183	   5963075 ns/op	   3.76 MB/s	 2257914 B/op	   25839 allocs/op
+PASS
+ok  	github.com/pkoukk/tiktoken-go	25.719s
+
+elapsed_seconds: 26
