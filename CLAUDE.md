@@ -51,3 +51,24 @@
 5.2 Model registry updates belong near model-to-encoding data and must include direct coverage for exact names and prefixes.
 
 5.3 Loader/cache changes must preserve error behavior, cache atomicity, and failed-response non-caching.
+
+## 6. Current Benchmark Status
+
+6.1 Current baseline source is `docs/benchmarks/20260618T041338Z.txt`.
+
+6.2 Benchmark environment: commit `6cf0e9b`, branch `main`, Go `go1.26.4 linux/amd64`, CPU `AMD Ryzen 9 5950X 16-Core Processor`.
+
+6.3 Benchmark command: `go test -bench=BenchmarkEncoding -benchmem -benchtime=1s -count=5 -run '^$' .`.
+
+6.4 Benchmark corpus: `testdata/bench/github_corpus.txt`, generated from 18 one-time GitHub source snapshots, total unique source bytes `5,147,273`.
+
+6.5 Median baseline results from five runs:
+
+| Case | ns/op median | MB/s median | B/op median | allocs/op median |
+| --- | ---: | ---: | ---: | ---: |
+| `BenchmarkEncoding/fixture` | 59,379 | 3.77 | 22,336 | 280 |
+| `BenchmarkEncoding/github/64KiB` | 21,374,753 | 3.07 | 8,975,372 | 100,471 |
+| `BenchmarkEncoding/github/1MiB` | 285,230,722 | 3.68 | 138,477,572 | 1,423,013 |
+| `BenchmarkEncoding/github/4MiB` | 966,270,095 | 4.34 | 482,517,664 | 4,962,996 |
+
+6.6 Current performance hotspot is allocation pressure in `Encode` on larger source corpus slices: `github/4MiB` allocates about `482MB/op` and about `4.96M allocs/op`.
