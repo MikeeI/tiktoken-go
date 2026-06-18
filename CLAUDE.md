@@ -62,7 +62,7 @@
 
 6.2 Benchmark functions must not print debug output; use `b.N`, `b.ReportAllocs()`, `b.SetBytes()`, and explicit fixture paths.
 
-6.3 Current known performance hotspot is allocation pressure in `Encode` on the GitHub corpus, especially larger corpus slices. Prioritize allocation reduction evidence over speculative micro-optimizations.
+6.3 Primary performance KPI is speed: lower `ns/op` and higher `MB/s` on representative corpus benchmarks. Allocation reductions matter only when they preserve or improve throughput, remove a measured bottleneck, or enable a verified follow-up speed win.
 
 6.4 Commit benchmark snapshots only when intentionally establishing or updating a baseline. Do not auto-commit every local run.
 
@@ -70,12 +70,12 @@
 
 6.6 Performance progress versus baseline `docs/benchmarks/20260618T041338Z.txt`:
 
-| Case | ns/op median | Speed change | B/op median | B/op change | allocs/op median | allocs change |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| `BenchmarkEncoding/fixture` | 67,149 | 13.1% slower | 24,064 | 7.7% higher | 244 | 12.9% lower |
-| `BenchmarkEncoding/github/64KiB` | 22,141,255 | 3.6% slower | 7,406,652 | 17.5% lower | 84,972 | 15.4% lower |
-| `BenchmarkEncoding/github/1MiB` | 301,011,409 | 5.5% slower | 113,252,896 | 18.2% lower | 1,213,422 | 14.7% lower |
-| `BenchmarkEncoding/github/4MiB` | 952,293,860 | 1.4% faster | 398,728,376 | 17.4% lower | 4,207,928 | 15.2% lower |
+| Case | ns/op median | Speed change | B/op median | B/op change | allocs/op median | allocs change | Read |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| `BenchmarkEncoding/fixture` | 67,149 | 13.1% slower | 24,064 | 7.7% higher | 244 | 12.9% lower | regression |
+| `BenchmarkEncoding/github/64KiB` | 22,141,255 | 3.6% slower | 7,406,652 | 17.5% lower | 84,972 | 15.4% lower | regression |
+| `BenchmarkEncoding/github/1MiB` | 301,011,409 | 5.5% slower | 113,252,896 | 18.2% lower | 1,213,422 | 14.7% lower | regression |
+| `BenchmarkEncoding/github/4MiB` | 952,293,860 | 1.4% faster | 398,728,376 | 17.4% lower | 4,207,928 | 15.2% lower | small win |
 
 6.7 New targeted benchmark surfaces:
 
@@ -84,7 +84,7 @@
 | `BenchmarkEncodingForModelLookup` | 66.03 ns/op | 24 B/op, 1 alloc/op | Confirms encoding/core state reuse removes repeated cold initialization. |
 | `BenchmarkEncoding/adversarial/long_ascii_single_piece` | 34,246,069 ns/op | 13,386,048 B/op, 16 allocs/op | Confirms heap BPE merge removes the prior multi-second O(N²) worst case. |
 
-6.8 Current read of progress: cache/init waste is fixed, parser allocations are reduced, corpus allocations are materially lower, adversarial BPE is fixed, but normal corpus throughput is not broadly improved yet. Next performance work should target `Encode` allocation pressure and avoid changes that trade corpus throughput for narrow worst-case wins.
+6.8 Current read of progress: cache/init waste is fixed and adversarial BPE is fixed, but normal corpus speed regressed for fixture, 64KiB, and 1MiB despite lower allocations. Next performance work must be throughput-first on representative `BenchmarkEncoding` corpus cases; allocation-only improvements are not sufficient.
 
 ## 7. Verification Policy
 
