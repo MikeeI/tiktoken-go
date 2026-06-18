@@ -15,19 +15,11 @@ func SetBpeLoader(loader BpeLoader) {
 }
 
 func GetEncoding(encodingName string) (*Tiktoken, error) {
-	enc, err := getEncoding(encodingName)
+	state, err := getEncodingState(encodingName)
 	if err != nil {
 		return nil, err
 	}
-	pbe, err := NewCoreBPE(enc.MergeableRanks, enc.SpecialTokens, enc.PatStr)
-	if err != nil {
-		return nil, err
-	}
-	specialTokensSet := map[string]any{}
-	for k := range enc.SpecialTokens {
-		specialTokensSet[k] = true
-	}
-	return NewTiktoken(pbe, enc, specialTokensSet), nil
+	return NewTiktoken(state.core, state.encoding, state.specialTokensSet), nil
 }
 
 func EncodingForModel(modelName string) (*Tiktoken, error) {
@@ -83,7 +75,7 @@ func (t *Tiktoken) Encode(text string, allowedSpecial, disallowedSpecial []strin
 }
 
 func (t *Tiktoken) EncodeOrdinary(text string) []int {
-	return (t.bpe.encodeOrdinaryNative(text))
+	return t.bpe.encodeOrdinaryNative(text)
 }
 
 func (t *Tiktoken) Decode(tokens []int) string {

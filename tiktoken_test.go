@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -59,9 +61,52 @@ func (u *urlRewriteLoader) LoadTiktokenBpe(url string) (map[string]int, error) {
 	return u.inner.LoadTiktokenBpe(url)
 }
 
+func resetEncodingStateForTest(t *testing.T) {
+	t.Helper()
+
+	l.Lock()
+	savedEncodingMap := encodingMap
+	savedEncodingLoads := encodingLoads
+	encodingMap = make(map[string]*encodingState)
+	encodingLoads = make(map[string]*encodingLoad)
+	l.Unlock()
+
+	t.Cleanup(func() {
+		l.Lock()
+		encodingMap = savedEncodingMap
+		encodingLoads = savedEncodingLoads
+		l.Unlock()
+	})
+}
+
+type staticBpeLoader struct {
+	calls     atomic.Int64
+	ranks     map[string]int
+	started   chan struct{}
+	release   chan struct{}
+	startOnce sync.Once
+}
+
+func (s *staticBpeLoader) LoadTiktokenBpe(string) (map[string]int, error) {
+	s.calls.Add(1)
+	if s.started != nil {
+		s.startOnce.Do(func() {
+			close(s.started)
+		})
+	}
+	if s.release != nil {
+		<-s.release
+	}
+	if s.ranks != nil {
+		return s.ranks, nil
+	}
+	return map[string]int{"a": 0}, nil
+}
+
 func TestGetEncoding_ErrorResponseNotCached(t *testing.T) {
+	resetEncodingStateForTest(t)
+
 	cacheDir := t.TempDir()
-	t.Setenv("TIKTOKEN_CACHE_DIR", cacheDir)
 
 	ass := assert.New(t)
 	req := require.New(t)
@@ -87,6 +132,89 @@ func TestGetEncoding_ErrorResponseNotCached(t *testing.T) {
 	entries, err := os.ReadDir(cacheDir)
 	req.NoError(err)
 	ass.Empty(entries, "expected empty cache dir after error")
+}
+
+func TestGetEncodingState_DeduplicatesConcurrentColdLoads(t *testing.T) {
+	resetEncodingStateForTest(t)
+
+	loader := &staticBpeLoader{
+		ranks:   map[string]int{"a": 0},
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	SetBpeLoader(loader)
+	t.Cleanup(func() {
+		SetBpeLoader(NewDefaultBpeLoader())
+	})
+
+	const goroutineCount = 16
+	start := make(chan struct{})
+	errs := make(chan error, goroutineCount)
+	states := make(chan *encodingState, goroutineCount)
+
+	var ready sync.WaitGroup
+	ready.Add(goroutineCount)
+	var done sync.WaitGroup
+	done.Add(goroutineCount)
+	for range goroutineCount {
+		go func() {
+			defer done.Done()
+			ready.Done()
+			<-start
+
+			state, err := getEncodingState(MODEL_CL100K_BASE)
+			if err != nil {
+				errs <- err
+				return
+			}
+			states <- state
+		}()
+	}
+
+	ready.Wait()
+	close(start)
+	<-loader.started
+	close(loader.release)
+	done.Wait()
+	close(errs)
+	close(states)
+
+	for err := range errs {
+		require.NoError(t, err)
+	}
+
+	var first *encodingState
+	stateCount := 0
+	for state := range states {
+		require.NotNil(t, state)
+		if first == nil {
+			first = state
+		} else {
+			assert.Same(t, first, state)
+		}
+		stateCount++
+	}
+	assert.Equal(t, goroutineCount, stateCount)
+	assert.Equal(t, int64(1), loader.calls.Load())
+}
+
+func TestGetEncoding_ReusesCoreBPE(t *testing.T) {
+	resetEncodingStateForTest(t)
+
+	loader := &staticBpeLoader{ranks: map[string]int{"a": 0}}
+	SetBpeLoader(loader)
+	t.Cleanup(func() {
+		SetBpeLoader(NewDefaultBpeLoader())
+	})
+
+	first, err := GetEncoding(MODEL_CL100K_BASE)
+	require.NoError(t, err)
+	second, err := GetEncoding(MODEL_CL100K_BASE)
+	require.NoError(t, err)
+
+	assert.NotSame(t, first, second)
+	assert.Same(t, first.bpe, second.bpe)
+	assert.Equal(t, int64(1), loader.calls.Load())
 }
 
 func TestEncodingForModel_Names(t *testing.T) {

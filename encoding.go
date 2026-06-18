@@ -87,13 +87,27 @@ var MODEL_PREFIX_TO_ENCODING = map[string]string{
 }
 
 var (
-	encodingMap map[string]*Encoding
-	l           *sync.RWMutex
+	encodingMap   map[string]*encodingState
+	encodingLoads map[string]*encodingLoad
+	l             *sync.RWMutex
 )
 
 func init() {
-	encodingMap = make(map[string]*Encoding)
+	encodingMap = make(map[string]*encodingState)
+	encodingLoads = make(map[string]*encodingLoad)
 	l = &sync.RWMutex{}
+}
+
+type encodingState struct {
+	encoding         *Encoding
+	core             *CoreBPE
+	specialTokensSet map[string]any
+}
+
+type encodingLoad struct {
+	done  chan struct{}
+	state *encodingState
+	err   error
 }
 
 type Encoding struct {
@@ -105,21 +119,69 @@ type Encoding struct {
 }
 
 func getEncoding(encodingName string) (*Encoding, error) {
-	l.RLock()
-	encoding, ok := encodingMap[encodingName]
-	l.RUnlock()
-	if ok {
-		return encoding, nil
-	}
-
-	l.Lock()
-	defer l.Unlock()
-	initEncoding, err := initEncoding(encodingName)
+	state, err := getEncodingState(encodingName)
 	if err != nil {
 		return nil, err
 	}
-	encodingMap[encodingName] = initEncoding
-	return encodingMap[encodingName], nil
+	return state.encoding, nil
+}
+
+func getEncodingState(encodingName string) (*encodingState, error) {
+	l.RLock()
+	state, ok := encodingMap[encodingName]
+	l.RUnlock()
+	if ok {
+		return state, nil
+	}
+
+	l.Lock()
+	if state, ok := encodingMap[encodingName]; ok {
+		l.Unlock()
+		return state, nil
+	}
+	if load, ok := encodingLoads[encodingName]; ok {
+		l.Unlock()
+		<-load.done
+		return load.state, load.err
+	}
+
+	load := &encodingLoad{done: make(chan struct{})}
+	encodingLoads[encodingName] = load
+	l.Unlock()
+
+	state, err := initEncodingState(encodingName)
+
+	l.Lock()
+	if err == nil {
+		encodingMap[encodingName] = state
+	}
+	load.state = state
+	load.err = err
+	delete(encodingLoads, encodingName)
+	close(load.done)
+	l.Unlock()
+
+	return state, err
+}
+
+func initEncodingState(encodingName string) (*encodingState, error) {
+	enc, err := initEncoding(encodingName)
+	if err != nil {
+		return nil, err
+	}
+	core, err := NewCoreBPE(enc.MergeableRanks, enc.SpecialTokens, enc.PatStr)
+	if err != nil {
+		return nil, err
+	}
+	specialTokensSet := map[string]any{}
+	for k := range enc.SpecialTokens {
+		specialTokensSet[k] = true
+	}
+	return &encodingState{
+		encoding:         enc,
+		core:             core,
+		specialTokensSet: specialTokensSet,
+	}, nil
 }
 
 func initEncoding(encodingName string) (*Encoding, error) {
