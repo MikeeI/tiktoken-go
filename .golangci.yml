@@ -1,0 +1,92 @@
+version: '2'
+
+linters:
+    enable:
+        - bodyclose
+        - canonicalheader
+        - contextcheck
+        - copyloopvar
+        - depguard
+        - dupword
+        - errcheck
+        - errchkjson
+        - errname
+        - errorlint
+        - exhaustive
+        - fatcontext
+        - gocognit
+        - goconst
+        - gocritic
+        - gocyclo
+        - govet
+        - ineffassign
+        - intrange
+        - misspell
+        - modernize
+        - nilerr
+        - nilnil
+        - noctx
+        - perfsprint
+        - prealloc
+        - staticcheck
+        - testifylint
+        - unparam
+        - usestdlibvars
+        - usetesting
+    disable:
+        - exhaustruct
+        - nlreturn
+        - unused
+        - varnamelen
+        - wrapcheck
+        - wsl
+    settings:
+        gocognit:
+            min-complexity: 20
+        gocyclo:
+            min-complexity: 20
+        gocritic:
+            enabled-tags:
+                - diagnostic
+                - style
+                - performance
+            disabled-checks:
+                - hugeParam
+                - rangeValCopy
+                - unnamedResult
+        exhaustive:
+            default-signifies-exhaustive: true
+        depguard:
+            rules:
+                main:
+                    files:
+                        - '$all'
+                    allow:
+                        - $gostd
+                        - github.com/
+                        - golang.org/x/
+                        - gopkg.in/
+                        - google.golang.org/
+                        - github.com/pkoukk/tiktoken-go/
+                        - github.com/stretchr/testify/
+
+exclusions:
+    paths:
+        - vendor
+
+formatters:
+    enable:
+        - gofumpt
+        - goimports
+    settings:
+        goimports:
+            local-prefixes:
+                - github.com/pkoukk/tiktoken-go/
+    exclusions:
+        generated: lax
+
+issues:
+    fix: true
+
+run:
+    timeout: 5m

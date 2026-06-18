@@ -33,11 +33,10 @@ func GetEncoding(encodingName string) (*Tiktoken, error) {
 func EncodingForModel(modelName string) (*Tiktoken, error) {
 	if encodingName, ok := MODEL_TO_ENCODING[modelName]; ok {
 		return GetEncoding(encodingName)
-	} else {
-		for prefix, encodingName := range MODEL_PREFIX_TO_ENCODING {
-			if strings.HasPrefix(modelName, prefix) {
-				return GetEncoding(encodingName)
-			}
+	}
+	for prefix, encodingName := range MODEL_PREFIX_TO_ENCODING {
+		if strings.HasPrefix(modelName, prefix) {
+			return GetEncoding(encodingName)
 		}
 	}
 	return nil, fmt.Errorf("no encoding for model %s", modelName)
@@ -49,13 +48,14 @@ type Tiktoken struct {
 	specialTokensSet map[string]any
 }
 
-func (t *Tiktoken) Encode(text string, allowedSpecial []string, disallowedSpecial []string) []int {
+func (t *Tiktoken) Encode(text string, allowedSpecial, disallowedSpecial []string) []int {
 	var allowedSpecialSet map[string]any
-	if len(allowedSpecial) == 0 {
+	switch {
+	case len(allowedSpecial) == 0:
 		allowedSpecialSet = map[string]any{}
-	} else if len(allowedSpecial) == 1 && allowedSpecial[0] == "all" {
+	case len(allowedSpecial) == 1 && allowedSpecial[0] == allowedSpecialAll:
 		allowedSpecialSet = t.specialTokensSet
-	} else {
+	default:
 		allowedSpecialSet = map[string]any{}
 		for _, v := range allowedSpecial {
 			allowedSpecialSet[v] = nil
@@ -66,7 +66,7 @@ func (t *Tiktoken) Encode(text string, allowedSpecial []string, disallowedSpecia
 	for _, v := range disallowedSpecial {
 		disallowedSpecialSet[v] = nil
 	}
-	if len(disallowedSpecial) == 1 && disallowedSpecial[0] == "all" {
+	if len(disallowedSpecial) == 1 && disallowedSpecial[0] == allowedSpecialAll {
 		disallowedSpecialSet = difference(t.specialTokensSet, allowedSpecialSet)
 	}
 
@@ -74,7 +74,7 @@ func (t *Tiktoken) Encode(text string, allowedSpecial []string, disallowedSpecia
 		specialRegex := t.SpecialTokenRegex(disallowedSpecialSet)
 		m := findRegex2StringMatch(text, specialRegex)
 		if m != "" {
-			panic(fmt.Sprintf("text contains disallowed special token %s", m))
+			panic("text contains disallowed special token " + m)
 		}
 	}
 

@@ -27,17 +27,16 @@ func BenchmarkEncoding(b *testing.B) {
 
 	text := string(fileContent)
 
-	for ordersOfMagnitude := 0; ordersOfMagnitude < 4; ordersOfMagnitude++ {
+	for range 4 {
 		// do actual encoding
 		fmt.Printf("Encoding %d bytes\n", len(text))
 		tkm.Encode(text, nil, nil)
 
 		stringBuilder := strings.Builder{}
-		for i := 0; i < 10; i++ {
+		for range 10 {
 			stringBuilder.WriteString(text)
 		}
 
 		text = stringBuilder.String()
 	}
-
 }

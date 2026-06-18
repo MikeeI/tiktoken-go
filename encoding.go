@@ -17,6 +17,7 @@ const (
 	MODEL_P50K_BASE   string = "p50k_base"
 	MODEL_P50K_EDIT   string = "p50k_edit"
 	MODEL_R50K_BASE   string = "r50k_base"
+	MODEL_GPT2        string = "gpt2"
 
 	BpeBaseURL = "https://openaipublic.blob.core.windows.net"
 
@@ -24,6 +25,9 @@ const (
 	Cl100kBaseURL = "https://openaipublic.blob.core.windows.net/encodings/cl100k_base.tiktoken"
 	P50kBaseURL   = "https://openaipublic.blob.core.windows.net/encodings/p50k_base.tiktoken"
 	R50kBaseURL   = "https://openaipublic.blob.core.windows.net/encodings/r50k_base.tiktoken"
+
+	allowedSpecialAll = "all"
+	p50kPatStr        = `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`
 )
 
 var MODEL_TO_ENCODING = map[string]string{
@@ -70,7 +74,7 @@ var MODEL_TO_ENCODING = map[string]string{
 	"code-search-babbage-code-001": MODEL_R50K_BASE,
 	"code-search-ada-code-001":     MODEL_R50K_BASE,
 	// open source
-	"gpt2": "gpt2",
+	MODEL_GPT2: MODEL_GPT2,
 }
 
 var MODEL_PREFIX_TO_ENCODING = map[string]string{
@@ -82,8 +86,10 @@ var MODEL_PREFIX_TO_ENCODING = map[string]string{
 	"gpt-3.5-turbo-": MODEL_CL100K_BASE, // e.g, gpt-3.5-turbo-0301, -0401, etc.
 }
 
-var encodingMap map[string]*Encoding
-var l *sync.RWMutex
+var (
+	encodingMap map[string]*Encoding
+	l           *sync.RWMutex
+)
 
 func init() {
 	encodingMap = make(map[string]*Encoding)
@@ -187,7 +193,7 @@ func p50k_edit() (*Encoding, error) {
 	special_tokens := map[string]int{ENDOFTEXT: 50256, FIM_PREFIX: 50281, FIM_MIDDLE: 50282, FIM_SUFFIX: 50283}
 	return &Encoding{
 		Name:           MODEL_P50K_EDIT,
-		PatStr:         `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`,
+		PatStr:         p50kPatStr,
 		MergeableRanks: ranks,
 		SpecialTokens:  special_tokens,
 	}, nil
@@ -200,16 +206,9 @@ func p50k_base() (*Encoding, error) {
 	}
 	special_tokens := map[string]int{ENDOFTEXT: 50256}
 
-	// ExplicitNVocab := 50281
-	// max_tokens := int(math.Max(float64(len(special_tokens)), float64(len(ranks))))
-
-	// if len(special_tokens)+len(ranks) != max_tokens {
-	// 	return nil, errors.New("special_tokens and ranks must be disjoint")
-	// }
-
 	return &Encoding{
 		Name:           MODEL_P50K_BASE,
-		PatStr:         `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`,
+		PatStr:         p50kPatStr,
 		MergeableRanks: ranks,
 		SpecialTokens:  special_tokens,
 		ExplicitNVocab: 50281,
@@ -225,7 +224,7 @@ func r50k_base() (*Encoding, error) {
 	return &Encoding{
 		Name:           MODEL_R50K_BASE,
 		MergeableRanks: ranks,
-		PatStr:         `'s|'t|'re|'ve|'m|'ll|'d| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+`,
+		PatStr:         p50kPatStr,
 		SpecialTokens:  special_tokens,
 		ExplicitNVocab: 50257,
 	}, nil

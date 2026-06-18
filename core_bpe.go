@@ -21,10 +21,10 @@ type CoreBPE struct {
 	sortedTokenBytes     [][]byte
 }
 
-func NewCoreBPE(encoder map[string]int, specialTokensEncoder map[string]int, pattern string) (*CoreBPE, error) {
+func NewCoreBPE(encoder, specialTokensEncoder map[string]int, pattern string) (*CoreBPE, error) {
 	regex, err := regexp2.Compile(pattern, regexp2.None)
 	if err != nil {
-		return nil, fmt.Errorf("error compiling regex: %s", err)
+		return nil, fmt.Errorf("error compiling regex: %w", err)
 	}
 
 	specialRegexStrs := make([]string, 0, len(specialTokensEncoder))
@@ -33,7 +33,7 @@ func NewCoreBPE(encoder map[string]int, specialTokensEncoder map[string]int, pat
 	}
 	specialRegex, err := regexp2.Compile(strings.Join(specialRegexStrs, "|"), regexp2.None)
 	if err != nil {
-		return nil, fmt.Errorf("error compiling special regex: %s", err)
+		return nil, fmt.Errorf("error compiling special regex: %w", err)
 	}
 
 	decoder := make(map[int]string, len(encoder))
@@ -69,6 +69,7 @@ func NewCoreBPE(encoder map[string]int, specialTokensEncoder map[string]int, pat
 	}, nil
 }
 
+//nolint:gocognit // Regex/special-token loop mirrors upstream logic; refactoring risks tokenizer parity.
 func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]int, int) {
 	specialRegex := bp.tlSpecialRegex
 	regex := bp.tlRegex
@@ -117,7 +118,7 @@ func (bp *CoreBPE) encodeNative(text string, allowedSpecial map[string]any) ([]i
 			temp := cutRunes(textRunes, start+nextSpecial[0], start+nextSpecial[1])
 			token := bp.specialTokensEncoder[temp]
 			ret = append(ret, token)
-			start = start + nextSpecial[1]
+			start += nextSpecial[1]
 			lastPieceTokenLen = 0
 		} else {
 			break
@@ -149,7 +150,7 @@ func (bpe *CoreBPE) decodeNative(tokens []int) []byte {
 		if !ok {
 			tokenBytes = bpe.specialTokensDecoder[token]
 		}
-		if len(tokenBytes) > 0 {
+		if tokenBytes != "" {
 			ret = append(ret, tokenBytes...)
 		}
 	}

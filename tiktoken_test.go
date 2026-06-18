@@ -13,34 +13,35 @@ import (
 
 func TestEncoding(t *testing.T) {
 	ass := assert.New(t)
+	req := require.New(t)
 	enc, err := EncodingForModel("gpt-3.5-turbo-16k")
-	ass.Nil(err, "Encoding  init should not be nil")
-	tokens := enc.Encode("hello world!你好，世界！", []string{"all"}, []string{"all"})
+	req.NoError(err, "Encoding  init should not be nil")
+	tokens := enc.Encode("hello world!你好，世界！", []string{allowedSpecialAll}, []string{allowedSpecialAll})
 	// these tokens are converted from the original python code
 	sourceTokens := []int{15339, 1917, 0, 57668, 53901, 3922, 3574, 244, 98220, 6447}
 	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
 
-	tokens = enc.Encode("hello <|endoftext|>", []string{"<|endoftext|>"}, nil)
+	tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, nil)
 	sourceTokens = []int{15339, 220, 100257}
 	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
 
-	tokens = enc.Encode("hello <|endoftext|>", []string{"<|endoftext|>"}, []string{"all"})
+	tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, []string{allowedSpecialAll})
 	sourceTokens = []int{15339, 220, 100257}
 	ass.ElementsMatch(sourceTokens, tokens, "Encoding should be equal")
 
 	ass.Panics(func() {
-		tokens = enc.Encode("hello <|endoftext|><|endofprompt|>", []string{"<|endoftext|>"}, []string{"all"})
+		tokens = enc.Encode("hello "+ENDOFTEXT+ENDOFPROMPT, []string{ENDOFTEXT}, []string{allowedSpecialAll})
 	})
 	ass.Panics(func() {
-		tokens = enc.Encode("hello <|endoftext|>", []string{"<|endoftext|>"}, []string{"<|endoftext|>"})
+		tokens = enc.Encode("hello "+ENDOFTEXT, []string{ENDOFTEXT}, []string{ENDOFTEXT})
 	})
 }
 
 func TestDecoding(t *testing.T) {
 	ass := assert.New(t)
-	// enc, err := GetEncoding("cl100k_base")
+	req := require.New(t)
 	enc, err := GetEncoding(MODEL_CL100K_BASE)
-	ass.Nil(err, "Encoding  init should not be nil")
+	req.NoError(err, "Encoding  init should not be nil")
 	sourceTokens := []int{15339, 1917, 0, 57668, 53901, 3922, 3574, 244, 98220, 6447}
 	txt := enc.Decode(sourceTokens)
 	ass.Equal("hello world!你好，世界！", txt, "Decoding should be equal")
@@ -62,6 +63,7 @@ func TestGetEncoding_ErrorResponseNotCached(t *testing.T) {
 	t.Setenv("TIKTOKEN_CACHE_DIR", cacheDir)
 
 	ass := assert.New(t)
+	req := require.New(t)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal server error", http.StatusNotFound)
 	}))
@@ -79,17 +81,17 @@ func TestGetEncoding_ErrorResponseNotCached(t *testing.T) {
 
 	got, err := GetEncoding(MODEL_O200K_BASE)
 	ass.Nil(got)
-	ass.Error(err, "expected error when fetching encoding with bad response")
+	req.Error(err, "expected error when fetching encoding with bad response")
 
 	entries, err := os.ReadDir(cacheDir)
-	ass.NoError(err)
+	req.NoError(err)
 	ass.Empty(entries, "expected empty cache dir after error")
 }
 
 func TestEncodingForModel_Names(t *testing.T) {
 	for model := range MODEL_TO_ENCODING {
 		// we don't support gpt2 model so far
-		if model == "gpt2" {
+		if model == MODEL_GPT2 {
 			continue
 		}
 		t.Run("Check model "+model, func(t *testing.T) {

@@ -1,8 +1,10 @@
 package tiktoken
 
 import (
+	"context"
 	"crypto/sha1"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,15 +26,19 @@ func readFile(blobpath string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		defer file.Close()
+		defer func() { _ = file.Close() }()
 		return io.ReadAll(file)
 	}
 	// avoiding blobfile for public files helps avoid auth issues, like MFA prompts
-	resp, err := http.Get(blobpath)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, blobpath, http.NoBody)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf(
 			"unexpected HTTP status %d (%s) for URL %s",
@@ -43,7 +49,7 @@ func readFile(blobpath string) ([]byte, error) {
 
 func readFileCached(blobpath string) ([]byte, error) {
 	if blobpath == "" {
-		return nil, fmt.Errorf("blobpath cannot be empty")
+		return nil, errors.New("blobpath cannot be empty")
 	}
 
 	cacheDir := strings.TrimSpace(os.Getenv("TIKTOKEN_CACHE_DIR"))
@@ -71,12 +77,12 @@ func readFileCached(blobpath string) ([]byte, error) {
 	}
 
 	tmpFilename := fmt.Sprintf("%s.%s.tmp", cachePath, uuid.NewString())
-	if err := os.WriteFile(tmpFilename, contents, 0644); err != nil {
+	if err := os.WriteFile(tmpFilename, contents, 0o644); err != nil {
 		return nil, fmt.Errorf("failed to write temporary file: %w", err)
 	}
 
 	if err := os.Rename(tmpFilename, cachePath); err != nil {
-		os.Remove(tmpFilename) // Clean up on failure
+		_ = os.Remove(tmpFilename) // Best-effort cleanup after failed rename.
 		return nil, fmt.Errorf("failed to rename temporary file: %w", err)
 	}
 
@@ -90,7 +96,7 @@ func loadTiktokenBpe(tiktokenBpeFile string) (map[string]int, error) {
 	}
 
 	bpeRanks := make(map[string]int)
-	for _, line := range strings.Split(string(contents), "\n") {
+	for line := range strings.SplitSeq(string(contents), "\n") {
 		if line == "" {
 			continue
 		}

@@ -1,0 +1,11 @@
+{
+    "name": "project-tiktoken-go-fork",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "format:prettier": "prettier --cache --write . --log-level warn",
+        "format:prettier:check": "prettier --cache --check . --log-level warn",
+        "lint-staged": "lint-staged --quiet",
+        "sort:package": "sort-package-json package.json"
+    }
+}

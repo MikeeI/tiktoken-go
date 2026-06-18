@@ -12,19 +12,22 @@ import (
 
 // main
 func main() {
-	textList, modelList, encodingList := ReadTestFile()
+	textList, modelList, encodingList, err := readTestFile()
+	if err != nil {
+		log.Fatal(err)
+	}
 	testTokenByModel(textList, modelList)
 	fmt.Println("=========================================")
 	testTokenByEncoding(textList, encodingList)
 }
 
 // read all columns from a file
-func ReadTestFile() (textList []string, modelList []string, encodingList []string) {
+func readTestFile() ([]string, []string, []string, error) {
 	file, err := os.Open("test/test.txt")
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var lines []string
 	scanner := bufio.NewScanner(file)
@@ -33,22 +36,20 @@ func ReadTestFile() (textList []string, modelList []string, encodingList []strin
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
+		return nil, nil, nil, err
 	}
-	textList = strings.Split(lines[0], ",")
-	modelList = strings.Split(lines[1], ",")
-	encodingList = strings.Split(lines[2], ",")
+	textList := strings.Split(lines[0], ",")
+	modelList := strings.Split(lines[1], ",")
+	encodingList := strings.Split(lines[2], ",")
 
-	return
+	return textList, modelList, encodingList, nil
 }
 
 // getTokenByModel
-func getTokenByModel(text string, model string) (num_tokens int) {
-
+func getTokenByModel(text, model string) int {
 	tkm, err := tiktoken.EncodingForModel(model)
 	if err != nil {
-		err = fmt.Errorf(": %v", err)
-		return
+		return 0
 	}
 
 	token := tkm.Encode(text, nil, nil)
@@ -57,12 +58,10 @@ func getTokenByModel(text string, model string) (num_tokens int) {
 }
 
 // getTokenByEncoding
-func getTokenByEncoding(text string, encoding string) (num_tokens int) {
-
+func getTokenByEncoding(text, encoding string) int {
 	tke, err := tiktoken.GetEncoding(encoding)
 	if err != nil {
-		err = fmt.Errorf(": %v", err)
-		return
+		return 0
 	}
 
 	token := tke.Encode(text, nil, nil)
@@ -71,18 +70,18 @@ func getTokenByEncoding(text string, encoding string) (num_tokens int) {
 }
 
 // testTokenByModel
-func testTokenByModel(textList []string, modelList []string) {
-	for i := 0; i < len(textList); i++ {
-		for j := 0; j < len(modelList); j++ {
+func testTokenByModel(textList, modelList []string) {
+	for i := range textList {
+		for j := range modelList {
 			fmt.Printf("text: %s, model: %s, token: %d\n", textList[i], modelList[j], getTokenByModel(textList[i], modelList[j]))
 		}
 	}
 }
 
 // testTokenByEncoding
-func testTokenByEncoding(textList []string, encodingList []string) {
-	for i := 0; i < len(textList); i++ {
-		for j := 0; j < len(encodingList); j++ {
+func testTokenByEncoding(textList, encodingList []string) {
+	for i := range textList {
+		for j := range encodingList {
 			fmt.Printf("text: %s, encoding: %s, token: %d\n", textList[i], encodingList[j], getTokenByEncoding(textList[i], encodingList[j]))
 		}
 	}
